@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<strings>
+  <string id="2000">UserName</string>
+  <string id="2001">Password</string>
+  <string id="2002">Debug mode</string>
+  <string id="2003">Nuxeo Server url</string>
+  <string id="2004">Language</string>
+</strings>

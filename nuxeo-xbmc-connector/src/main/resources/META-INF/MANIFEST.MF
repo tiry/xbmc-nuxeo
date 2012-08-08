@@ -1,0 +1,12 @@
+Manifest-Version: 1.0
+Nuxeo-WebModule: org.nuxeo.xbmc.XbmcApplication;name=xbmc;package=org/nuxeo/xbmc
+Bundle-Vendor: Nuxeo
+Bundle-ActivationPolicy: lazy
+Bundle-ClassPath: .
+Bundle-Version: 1.0
+Bundle-Name: nuxeo-xbmc-connector
+Nuxeo-Component: OSGI-INF/extensions/XbmcDirectoryItemAdapter-contrib.xml
+Bundle-ManifestVersion: 2
+Bundle-SymbolicName: nuxeo-xbmc-connector
+Bundle-RequiredExecutionEnvironment: JavaSE-1.6
+
