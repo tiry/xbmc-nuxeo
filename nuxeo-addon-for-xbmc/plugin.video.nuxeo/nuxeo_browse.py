@@ -1,6 +1,7 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 import urllib,urllib2,re,xbmcplugin,xbmcgui,sys,xbmcaddon,json,base64
+import xbmcctx 
 
 pluginurl = sys.argv[0];
 pluginhandle = int(sys.argv[1])
@@ -98,16 +99,25 @@ def parameters_string_to_dict(parameters):
          
 params=parameters_string_to_dict(sys.argv[2])
 url=params.get('url')
+runctx = xbmcctx.context().getContext()
 
 print "##################### Nuxeo Plugin"
 print "pluginurl=" + pluginurl
 print "url=" + str(url)
 print "pluginhandle=" + str(pluginhandle)
+print "ctx=" + runctx
+
+if (url==None):
+  if (runctx == 'video'):
+    url='videos'
+  elif (runctx=='image'):
+    url='pictures'
+  elif (runctx=='audio'):
+    url='audio'
+  else:
+    url=''
 
 if type(url)==type(str()):
   url=urllib.unquote_plus(url)
-
-if (url==None):
-  url=''
 
 fetchFromNuxeoServer(url)
