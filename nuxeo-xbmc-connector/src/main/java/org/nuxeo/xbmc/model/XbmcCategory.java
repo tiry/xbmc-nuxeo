@@ -106,4 +106,9 @@ public class XbmcCategory implements XbmcDirectoryItem, XbmcFilterInfo {
     public void setUserInput(String userInput) {
         this.userInput = userInput;
     }
+
+    @Override
+    public String getId() {
+        return getName();
+    }
 }

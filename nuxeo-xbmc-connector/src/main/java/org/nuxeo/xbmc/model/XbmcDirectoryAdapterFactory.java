@@ -17,6 +17,8 @@
 
 package org.nuxeo.xbmc.model;
 
+import java.util.Calendar;
+
 import org.nuxeo.ecm.core.api.ClientException;
 import org.nuxeo.ecm.core.api.DocumentModel;
 import org.nuxeo.ecm.core.api.adapter.DocumentAdapterFactory;
@@ -50,10 +52,29 @@ public class XbmcDirectoryAdapterFactory implements DocumentAdapterFactory {
 
         return new XbmcDirectoryItem() {
 
+            protected String getCacheKey() {
+                try {
+                    Calendar modified = (Calendar) doc.getPropertyValue("dc:modified");
+                    if (modified != null) {
+                        return "TS" + modified.getTimeInMillis();
+                    } else {
+                        return doc.getCacheKey();
+                    }
+                } catch (ClientException e) {
+                    return doc.getId();
+                }
+            }
+
+            @Override
+            public String getId() {
+                return doc.getId();
+            }
+
             @Override
             public String getUrl() {
                 return "/nxbigfile/" + doc.getRepositoryName() + "/"
-                        + doc.getId() + "/blobholder:0/";
+                        + doc.getId() + "/blobholder:0/?cacheKey="
+                        + getCacheKey();
             }
 
             @Override
@@ -67,7 +88,7 @@ public class XbmcDirectoryAdapterFactory implements DocumentAdapterFactory {
 
             @Override
             public String getThumbnailImage() {
-                return thumbNailUrl;
+                return thumbNailUrl + "?cacheKey=" + getCacheKey();
             }
 
             @Override

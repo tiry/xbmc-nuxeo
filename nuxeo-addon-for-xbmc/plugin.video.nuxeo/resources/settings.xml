@@ -3,6 +3,7 @@
  <category label= "General">
   <setting id="language" type="enum" label="2004" values="EN|FR"/>
   <setting id="debug" type="bool" label="2002" default="false" />
+  <setting id="pageSize" type="text" label="Page Size" default="20" />
  </category>
  <category label= "Nuxeo Server">
   <setting id="nuxeoServer" type="text" label="2003" default ="http://127.0.0.1:8080/nuxeo/" />

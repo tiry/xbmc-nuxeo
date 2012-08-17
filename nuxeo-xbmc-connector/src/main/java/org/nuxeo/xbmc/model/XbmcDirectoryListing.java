@@ -10,6 +10,12 @@ public class XbmcDirectoryListing extends ArrayList<XbmcDirectoryItem>
 
     private static final long serialVersionUID = 1L;
 
+    protected long pageIndex = 0;
+
+    protected long nbPages = 0;
+
+    protected int pageSize = 0;
+
     public XbmcDirectoryListing() {
         super();
     }
@@ -23,4 +29,29 @@ public class XbmcDirectoryListing extends ArrayList<XbmcDirectoryItem>
             add(doc.getAdapter(XbmcDirectoryItem.class));
         }
     }
+
+    public long getPageIndex() {
+        return pageIndex;
+    }
+
+    public void setPageIndex(long pageIndex) {
+        this.pageIndex = pageIndex;
+    }
+
+    public long getNbPages() {
+        return nbPages;
+    }
+
+    public void setNbPages(long nbPages) {
+        this.nbPages = nbPages;
+    }
+
+    public int getPageSize() {
+        return pageSize;
+    }
+
+    public void setPageSize(int pageSize) {
+        this.pageSize = pageSize;
+    }
+
 }

@@ -40,11 +40,18 @@ public class XbmcDirectoryListingWriter implements
 
         JsonGenerator jg = JsonWriter.createGenerator(out);
         jg.useDefaultPrettyPrinter();
-        jg.writeStartArray();
+        jg.writeStartObject();
+        jg.writeNumberField("pageSize", items.getPageSize());
+        jg.writeNumberField("pageIndex", items.getPageIndex());
+        jg.writeNumberField("numberOfPages", items.getNbPages());
+
+        jg.writeArrayFieldStart("result");
+        // jg.writeStartArray();
         for (XbmcDirectoryItem item : items) {
             jg.writeObject(item);
         }
         jg.writeEndArray();
+        jg.writeEndObject();
         jg.flush();
         jg.close();
     }

@@ -1,7 +1,8 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 import urllib,urllib2,re,xbmcplugin,xbmcgui,sys,xbmcaddon,json,base64
-import xbmcctx 
+import xbmcctx
+import os
 
 pluginurl = sys.argv[0];
 pluginhandle = int(sys.argv[1])
@@ -22,20 +23,15 @@ elif language=="1":
 username = settings.getSetting("username")
 password = settings.getSetting("password")
 
-def fetchFromNuxeoServer(path=''):
-        items = getNuxeoData(path)
-        displayItems(items)
+pageSize = settings.getSetting("pageSize")
+if (pageSize == "" or pageSize == None) :
+  pageSize = 5
+else:
+  pageSize = int(pageSize)
 
-def search():
-        keyboard = xbmc.Keyboard('', translation(30005))
-        keyboard.doModal()
-        if keyboard.isConfirmed() and keyboard.getText():
-          search_string = keyboard.getText().replace(" ","+")
-          if language=="de":
-            url="http://videos.arte.tv/de/do_search/videos/suche?q="+search_string
-          elif language=="fr":
-            url="http://videos.arte.tv/fr/do_search/videos/recherche?q="+search_string
-          listVideos(url)
+def fetchFromNuxeoServer(path='', pageIndex=0, pageSize = pageSize):
+        items = getNuxeoData(path, pageIndex, pageSize)
+        displayItems(items)
 
 def getNuxeoBaseUrl():
         return settings.getSetting("nuxeoServer") + "site/xbmc/"
@@ -51,14 +47,20 @@ def getDownloadLink(downloadUrl):
           downloadUrl=downloadUrl[1:]
         return getNuxeoAuthenticatedBaseDownloadUrl() + downloadUrl
 
-def getNuxeoData(url):
-        if url.find("?")>0:
+def getNuxeoData(url, pageIndex, pageSize):
+        if url.find("?searchkeyword")>0:
           keyboard = xbmc.Keyboard('', "enter search keyword")
           keyboard.doModal()
           if keyboard.isConfirmed() and keyboard.getText():
             search_string = keyboard.getText().replace(" ","+")
             url = url + "=" + search_string
         url = getNuxeoBaseUrl() + url
+
+        if url.find("?") < 0 :
+          url = url + "?"
+        else:
+          url = url + "&"
+        url = url + "pageSize=" + str(pageSize) + "&page=" + str(pageIndex)
         print "query url=" + url
         req = urllib2.Request(url)
         req.add_header("authorization", "basic " +  base64.b64encode(username + ":" + password))
@@ -69,7 +71,19 @@ def getNuxeoData(url):
         return items;
 
 def displayItems(items):
-        for item in items:
+        pageSize = items['pageSize']
+        pageIndex = items['pageIndex']
+        numberOfPages = items['numberOfPages']
+
+        print "display page=" + str(pageIndex) + "/" + str(numberOfPages) + " with pageSize=" + str(pageSize)
+
+        #if (pageIndex>0) :
+        #  liz=xbmcgui.ListItem("previous page", iconImage="DefaultVideo.png")
+        #  itemUrl = pluginurl + '?url=' + urllib.quote_plus(url) + "&pageIndex=" + str(pageIndex-1)
+        #  print "adding prev page button with url=" + itemUrl
+        #  ok=xbmcplugin.addDirectoryItem(handle=int(sys.argv[1]),url=itemUrl,listitem=liz,isFolder=True)
+
+        for item in items['result']:
           isDir = item['directory']
           liz=xbmcgui.ListItem(str(item['title']), iconImage="DefaultVideo.png", thumbnailImage=getDownloadLink(str(item['thumbnailImage'])))
           liz.setInfo( type=str(item['mediaType']), infoLabels={ "Title": str(item['title']) } )
@@ -83,7 +97,18 @@ def displayItems(items):
             downloadUrl = str(item['url'])
             itemUrl = getDownloadLink(downloadUrl)
             print "adding new playable item with url=" + itemUrl
+          contextMenu = [("Myitem","MyCB()")]
+          contextMenu = [("MyItem2",'XBMC.Container.Update(%s?mode=ctx&item=%s)' % (sys.argv[0],item['id']))]
+          liz.addContextMenuItems(contextMenu)
           ok=xbmcplugin.addDirectoryItem(handle=int(sys.argv[1]),url=itemUrl,listitem=liz,isFolder=isDir)
+
+        if (numberOfPages>0 and pageIndex<(numberOfPages-1)) :
+          iconPath = os.path.join(settings.getAddonInfo('path'),"resources","skins","default","media","NextPage.png")
+          liz=xbmcgui.ListItem("more (" + str(pageIndex+2) + "/" + str(numberOfPages) +")", iconImage=iconPath)
+          itemUrl = pluginurl + '?url=' + urllib.quote_plus(url) + "&pageIndex=" + str(pageIndex+1)
+          print "adding next page button with url=" + itemUrl
+          ok=xbmcplugin.addDirectoryItem(handle=int(sys.argv[1]),url=itemUrl,listitem=liz,isFolder=True)
+
         xbmcplugin.endOfDirectory(int(sys.argv[1]))
 
 def parameters_string_to_dict(parameters):
@@ -106,6 +131,15 @@ print "pluginurl=" + pluginurl
 print "url=" + str(url)
 print "pluginhandle=" + str(pluginhandle)
 print "ctx=" + runctx
+print "params=" + str(params)
+print "path=" + str(settings.getAddonInfo('path'))
+
+pageIndex = params.get("pageIndex")
+if pageIndex == "" or pageIndex == None:
+  pageIndex = 0
+else:
+  pageIndex = int(pageIndex)
+
 
 if (url==None):
   if (runctx == 'video'):
@@ -120,4 +154,4 @@ if (url==None):
 if type(url)==type(str()):
   url=urllib.unquote_plus(url)
 
-fetchFromNuxeoServer(url)
+fetchFromNuxeoServer(url, pageIndex, pageSize)

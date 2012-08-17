@@ -1,6 +1,8 @@
 package org.nuxeo.xbmc;
 
+import java.io.Serializable;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -8,7 +10,13 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.nuxeo.ecm.core.api.ClientException;
 import org.nuxeo.ecm.core.api.CoreSession;
+import org.nuxeo.ecm.core.api.DocumentModel;
 import org.nuxeo.ecm.core.api.DocumentModelList;
+import org.nuxeo.ecm.platform.query.api.PageProvider;
+import org.nuxeo.ecm.platform.query.api.PageProviderService;
+import org.nuxeo.ecm.platform.query.core.CoreQueryPageProviderDescriptor;
+import org.nuxeo.ecm.platform.query.nxql.CoreQueryDocumentPageProvider;
+import org.nuxeo.runtime.api.Framework;
 import org.nuxeo.xbmc.model.XbmcCategory;
 import org.nuxeo.xbmc.model.XbmcDirectoryListing;
 import org.nuxeo.xbmc.model.XbmcFilterInfo;
@@ -81,6 +89,20 @@ public class XbmcBrowserHelper {
         if (subPath.startsWith("/")) {
             subPath = subPath.substring(1);
         }
+
+        Long targetPageSize = 20L;
+        if (params.containsKey("pageSize")) {
+            targetPageSize = Long.parseLong(params.get("pageSize"));
+        }
+        Long targetPage = 1L;
+        if (params.containsKey("page")) {
+            targetPage = Long.parseLong(params.get("page"));
+        }
+
+        if (targetPage < 0) {
+            targetPage = 0L;
+        }
+
         XbmcCategory currentNode = root;
         String[] parts = subPath.split("/");
         List<XbmcCategory> filters = new ArrayList<XbmcCategory>();
@@ -96,17 +118,17 @@ public class XbmcBrowserHelper {
             }
         }
         if (currentNode.children().size() == 0) {
-            return query(session, filters, params);
+            // return query(session, filters, params);
+            return queryPage(session, filters, params, targetPageSize,
+                    targetPage);
         }
         XbmcDirectoryListing categories = new XbmcDirectoryListing();
         categories.addAll(currentNode.children());
         return categories;
     }
 
-    protected static XbmcDirectoryListing query(CoreSession session,
-            List<XbmcCategory> filters, Map<String, String> params)
-            throws ClientException {
-        XbmcDirectoryListing items = new XbmcDirectoryListing();
+    protected static String buildQuery(List<XbmcCategory> filters,
+            Map<String, String> params) throws ClientException {
 
         StringBuffer sb = new StringBuffer("select * from Document ");
         List<String> whereClauses = new ArrayList<String>();
@@ -141,9 +163,43 @@ public class XbmcBrowserHelper {
                         params.get(paramName));
             }
         }
+        return query;
+    }
+
+    protected static XbmcDirectoryListing query(CoreSession session,
+            List<XbmcCategory> filters, Map<String, String> params)
+            throws ClientException {
+        XbmcDirectoryListing items = new XbmcDirectoryListing();
+        String query = buildQuery(filters, params);
         DocumentModelList docs = session.query(query);
         items.addDocuments(docs);
         return items;
     }
 
+    public static XbmcDirectoryListing queryPage(CoreSession session,
+            List<XbmcCategory> filters, Map<String, String> params,
+            Long targetPageSize, Long targetPage) throws ClientException {
+
+        String query = buildQuery(filters, params);
+
+        PageProviderService pps = Framework.getLocalService(PageProviderService.class);
+        Map<String, Serializable> props = new HashMap<String, Serializable>();
+        props.put(CoreQueryDocumentPageProvider.CORE_SESSION_PROPERTY,
+                (Serializable) session);
+
+        CoreQueryPageProviderDescriptor desc = new CoreQueryPageProviderDescriptor();
+        desc.setPattern(query);
+
+        Object[] parameters = null;
+        PageProvider<DocumentModel> pp = (PageProvider<DocumentModel>) pps.getPageProvider(
+                "", desc, null, targetPageSize, targetPage, props, parameters);
+
+        XbmcDirectoryListing items = new XbmcDirectoryListing();
+        items.addDocuments(pp.getCurrentPage());
+        items.setPageSize((int) pp.getPageSize());
+        items.setNbPages(pp.getNumberOfPages());
+        items.setPageIndex(pp.getCurrentPageIndex());
+
+        return items;
+    }
 }
