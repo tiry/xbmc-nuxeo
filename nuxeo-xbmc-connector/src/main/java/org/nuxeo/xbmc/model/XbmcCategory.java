@@ -1,7 +1,9 @@
 package org.nuxeo.xbmc.model;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 public class XbmcCategory implements XbmcDirectoryItem, XbmcFilterInfo {
 
@@ -110,5 +112,12 @@ public class XbmcCategory implements XbmcDirectoryItem, XbmcFilterInfo {
     @Override
     public String getId() {
         return getName();
+    }
+
+    @Override
+    public Map<String, Object> getMetaData() {
+        Map<String, Object> meta = new HashMap<String, Object>();
+        meta.put("Title", getTitle());
+        return meta;
     }
 }

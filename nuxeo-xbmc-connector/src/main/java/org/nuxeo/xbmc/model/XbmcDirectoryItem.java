@@ -1,5 +1,7 @@
 package org.nuxeo.xbmc.model;
 
+import java.util.Map;
+
 public interface XbmcDirectoryItem {
 
     String getId();
@@ -17,4 +19,6 @@ public interface XbmcDirectoryItem {
     String getUrl();
 
     boolean isDirectory();
+
+    Map<String, Object> getMetaData();
 }

@@ -18,11 +18,14 @@
 package org.nuxeo.xbmc.model;
 
 import java.util.Calendar;
+import java.util.HashMap;
+import java.util.Map;
 
 import org.nuxeo.ecm.core.api.ClientException;
 import org.nuxeo.ecm.core.api.DocumentModel;
 import org.nuxeo.ecm.core.api.adapter.DocumentAdapterFactory;
 import org.nuxeo.ecm.platform.picture.api.adapters.MultiviewPicture;
+import org.nuxeo.ecm.platform.video.Stream;
 import org.nuxeo.ecm.platform.video.VideoDocument;
 
 /**
@@ -110,7 +113,59 @@ public class XbmcDirectoryAdapterFactory implements DocumentAdapterFactory {
                 return false;
             }
 
+            @Override
+            public Map<String, Object> getMetaData() {
+
+                Map<String, Object> meta = new HashMap<String, Object>();
+                meta.put("Title", getTitle());
+
+                if ("Video".equals(resourceType)) {
+                    addVideoMetaData(doc, meta);
+                } else if ("Picture".equals(resourceType)) {
+
+                }
+                return meta;
+            }
+
         };
+
+    }
+
+    protected static void addVideoMetaData(DocumentModel document,
+            Map<String, Object> meta) {
+        VideoDocument video = document.getAdapter(VideoDocument.class);
+
+        try {
+            meta.put("Duration", video.getVideo().getVideoInfo().getDuration()
+                    / 60 + "");
+            meta.put("Plot",
+                    (String) document.getPropertyValue("dc:description"));
+
+            if (meta.get("Plot") == null || meta.get("Plot").equals("")) {
+                meta.put("Plot", document.getTitle());
+            }
+
+            meta.put("VideoResolution", video.getVideo().getHeight());
+            meta.put(
+                    "VideoAspect",
+                    ((video.getVideo().getWidth() + 0.0) / video.getVideo().getHeight())
+                            + "");
+
+            meta.put("Year", 2019);
+            meta.put("Genre", "YoMan");
+            meta.put("VideoResolution", 576);
+            meta.put("VideoAspect", 1.33);
+
+            for (Stream stream : video.getVideo().getStreams()) {
+                if (stream.getType().equals("Video")) {
+                    meta.put("VideoCodec", stream.getCodec());
+                } else if (stream.getType().equals("Audio")) {
+                    meta.put("AudioCodec", stream.getCodec());
+                }
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 
 }

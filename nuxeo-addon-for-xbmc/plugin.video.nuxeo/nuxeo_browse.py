@@ -94,12 +94,15 @@ def displayItems(items):
             print "adding new directory item with url=" + itemUrl
           else:
             liz.setProperty('IsPlayable', 'true')
+            metadata = {"Title": str(item['title']), "Year" : 2018,  "Plot" : "xxxxyyyyzzzz", "Genre" : "testMe", "Duration" : 120}
+            liz.setInfo( type=str(item['mediaType']), infoLabels=item['metaData'] )
             downloadUrl = str(item['url'])
             itemUrl = getDownloadLink(downloadUrl)
-            print "adding new playable item with url=" + itemUrl
+            #print "adding new playable item with url=" + str(itemUrl)
           contextMenu = [("Myitem","MyCB()")]
           contextMenu = [("MyItem2",'XBMC.Container.Update(%s?mode=ctx&item=%s)' % (sys.argv[0],item['id']))]
           liz.addContextMenuItems(contextMenu)
+          liz.addContextMenuItems([("Infos","XBMC.Action(Info)")])
           ok=xbmcplugin.addDirectoryItem(handle=int(sys.argv[1]),url=itemUrl,listitem=liz,isFolder=isDir)
 
         if (numberOfPages>0 and pageIndex<(numberOfPages-1)) :
